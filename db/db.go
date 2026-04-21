@@ -8,8 +8,22 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Connect establece la conexión con PostgreSQL usando variables de entorno.
 func Connect() (*sql.DB, error) {
+	// 1. Si existe DATABASE_URL (Railway), úsala directamente
+	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		db, err := sql.Open("postgres", dbURL)
+		if err != nil {
+			return nil, fmt.Errorf("error opening database (DATABASE_URL): %w", err)
+		}
+
+		if err := db.Ping(); err != nil {
+			return nil, fmt.Errorf("error connecting to database (DATABASE_URL): %w", err)
+		}
+
+		return db, nil
+	}
+
+	// 2. Si no existe, usa variables locales (.env)
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "5432")
 	user := getEnv("DB_USER", "postgres")
