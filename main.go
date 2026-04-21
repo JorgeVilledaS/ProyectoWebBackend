@@ -9,6 +9,7 @@ import (
 	"series-tracker/db"
 	"series-tracker/handlers"
 	"series-tracker/middleware"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -111,6 +112,13 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("🎬 Series Tracker API running on http://localhost:%s", port)
+	log.Printf("Series Tracker API running on http://localhost:%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, handler))
+}
+
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Println("No .env file found")
+	}
 }
