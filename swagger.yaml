@@ -1,0 +1,361 @@
+openapi: 3.0.3
+info:
+  title: Series Tracker API
+  description: |
+    API REST para el Series Tracker — un tracker personal de series de TV y anime.
+    Permite gestionar series, ratings e imágenes de portada.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Desarrollo local
+
+tags:
+  - name: series
+    description: Operaciones sobre series
+  - name: ratings
+    description: Sistema de rating por serie
+
+paths:
+  /series:
+    get:
+      tags: [series]
+      summary: Listar series
+      description: |
+        Retorna una lista paginada de series. Soporta búsqueda, paginación y ordenamiento.
+      parameters:
+        - name: page
+          in: query
+          description: Número de página (default 1)
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Resultados por página (default 10, max 100)
+          schema:
+            type: integer
+            default: 10
+        - name: q
+          in: query
+          description: Búsqueda por nombre (case-insensitive)
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: Campo por el cual ordenar
+          schema:
+            type: string
+            enum: [id, name, current_episode, total_episodes, created_at]
+            default: id
+        - name: order
+          in: query
+          description: Dirección del ordenamiento
+          schema:
+            type: string
+            enum: [ASC, DESC]
+            default: ASC
+      responses:
+        "200":
+          description: Lista paginada de series
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedSeries"
+    post:
+      tags: [series]
+      summary: Crear una serie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSeriesInput"
+            example:
+              name: "Breaking Bad"
+              current_episode: 1
+              total_episodes: 62
+      responses:
+        "201":
+          description: Serie creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Series"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /series/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [series]
+      summary: Obtener una serie por ID
+      responses:
+        "200":
+          description: Serie encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Series"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [series]
+      summary: Actualizar una serie
+      description: Solo se actualizan los campos enviados (PATCH semántico sobre PUT).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSeriesInput"
+      responses:
+        "200":
+          description: Serie actualizada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Series"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [series]
+      summary: Eliminar una serie
+      responses:
+        "204":
+          description: Eliminada correctamente (sin body)
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /series/{id}/image:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      tags: [series]
+      summary: Subir imagen de portada
+      description: |
+        Sube una imagen de portada para la serie. Máximo 1MB.
+        Formatos aceptados: jpg, jpeg, png, webp, gif.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Imagen guardada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  image_url:
+                    type: string
+                    example: /uploads/1_1234567890.jpg
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /series/{id}/rating:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [ratings]
+      summary: Obtener ratings de una serie
+      responses:
+        "200":
+          description: Lista de ratings con promedio
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ratings:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Rating"
+                  average:
+                    type: number
+                    format: float
+                  count:
+                    type: integer
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      tags: [ratings]
+      summary: Agregar un rating a una serie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRatingInput"
+      responses:
+        "201":
+          description: Rating creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rating"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /ratings/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    delete:
+      tags: [ratings]
+      summary: Eliminar un rating
+      responses:
+        "204":
+          description: Eliminado correctamente
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  schemas:
+    Series:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        current_episode:
+          type: integer
+        total_episodes:
+          type: integer
+        image_url:
+          type: string
+        average_rating:
+          type: number
+          format: float
+        rating_count:
+          type: integer
+
+    CreateSeriesInput:
+      type: object
+      required: [name, total_episodes]
+      properties:
+        name:
+          type: string
+        current_episode:
+          type: integer
+          default: 1
+        total_episodes:
+          type: integer
+
+    UpdateSeriesInput:
+      type: object
+      properties:
+        name:
+          type: string
+        current_episode:
+          type: integer
+        total_episodes:
+          type: integer
+
+    PaginatedSeries:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Series"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+
+    Rating:
+      type: object
+      properties:
+        id:
+          type: integer
+        series_id:
+          type: integer
+        score:
+          type: integer
+          minimum: 1
+          maximum: 10
+        comment:
+          type: string
+
+    CreateRatingInput:
+      type: object
+      required: [score]
+      properties:
+        score:
+          type: integer
+          minimum: 1
+          maximum: 10
+        comment:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: object
+          additionalProperties:
+            type: string
+
+  responses:
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: "series not found"
+    BadRequest:
+      description: Request inválido
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ValidationError:
+      description: Error de validación con detalles por campo
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error: "validation_error"
+            details:
+              name: "name is required"
+              total_episodes: "total_episodes must be greater than 0"
