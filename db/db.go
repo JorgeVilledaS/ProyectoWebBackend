@@ -11,6 +11,7 @@ import (
 func Connect() (*sql.DB, error) {
 	// 1. Si existe DATABASE_URL (Railway), úsala directamente
 	if dbURL := os.Getenv("DATABASE_URL"); dbURL != "" {
+		dbURL = strings.ReplaceAll(dbURL, "postgresql://", "postgres://")
 		db, err := sql.Open("postgres", dbURL)
 		if err != nil {
 			return nil, fmt.Errorf("error opening database (DATABASE_URL): %w", err)
