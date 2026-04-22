@@ -3,13 +3,14 @@
 REST API de la app Tracker de Series, hecho con **Go** y **PostgreSQL**.
 
 **Frontend repo:** https://github.com/JorgeVilledaS/series-tracker-frontend  
-**Live app:** POR EL MOMENTO LOCAL
+**Live app:** https://proyecto-web-frontend-5gl5860lf-jorgevilledas-projects.vercel.app/ 
 
 ---
 
-## Screenshot
+## Screenshot del deploy en Railway
 
-PENDIENTE
+<img width="1920" height="1062" alt="image" src="https://github.com/user-attachments/assets/47e31818-1efd-4eb7-9b20-d1e7c6fc0566" />
+
 
 ---
 
@@ -17,52 +18,6 @@ PENDIENTE
 
 - Go 1.22+
 - PostgreSQL 14+
-
----
-
-## Correrlo Localmente
-
-### 1. CLonar Repo
-
-```bash
-git clone https://github.com/JorgeVilledaS/series-tracker-backend
-cd series-tracker-backend
-```
-
-### 2. Crear db
-
-```sql
-CREATE DATABASE series_tracker;
-```
-
-### 3. Configurar variables del env
-
-Copy `.env.example` to `.env` and fill in your values:
-
-```bash
-cp .env.example .env
-```
-
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=series_tracker
-PORT=8080
-```
-
-La aplicación se migra automáticamente.
-
-### 4. Instalar dependencias y ejecutar.
-
-```bash
-go mod tidy
-go run main.go
-```
-
-la API estará temporalmente en `http://localhost:8080`.
-
 ---
 
 ## API Endpoints
@@ -120,7 +75,7 @@ Para facilitarme el desarrollo permití que viniera de cualquier origen el acces
 
 ---
 
-## Reflection
+## Reflexión
 Usar la librería estándar de go sin frameworks nos obliga a entender HTTP a mayor profundidad, pues cosas como ruteo, códigos de estado y encabezados los hacen "mágicamente" las herramientas más modernas. Postgres resultó fácil pues es la DB que usamos en el curso de DB1 y me pareció interesante usar el patrón COALESCE + LEFT JOIN para calcular promedios limpio y eficiente. 
 
 Creo que si volvería usar estas tecnologías en proyectos de este mismo tamaño, pero en cosas más grandes me plantearía otras cosas. Aún así, la separación entre cliente y servidor (contrato REST + JSON) hizo que iterar en el frontend de forma independiente fuera realmente sencillo.
